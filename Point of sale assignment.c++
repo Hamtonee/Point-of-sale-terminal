@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
+#include <conio.h> // Include conio.h for password input
 
 using namespace std;
 
@@ -21,8 +22,8 @@ public:
     void rem();
     void list();
     void reciept();
-    void viewProducts();
-    void showProducts(); // function to show products before editing or removing
+    void viewProducts(); // New function to view products in the databank
+    void eraseDatabank(); // New function to erase all data from the databank
 };
 
 void Shopping::menu()
@@ -37,7 +38,7 @@ void Shopping::menu()
     cout << "\t\t\t\t                  SHOPPING MENU                       \n";
     cout << "\t\t\t\t                                                      \n";
     cout << "\t\t\t\t______________________________________________________\n";
-    cout << "\t\t\t\t          1.Administrator                             \n";
+    cout << "\t\t\t\t          1.Administator                              \n";
     cout << "\t\t\t\t                                                      \n";
     cout << "\t\t\t\t          2.Buyer                                     \n";
     cout << "\t\t\t\t                                                      \n";
@@ -51,8 +52,19 @@ void Shopping::menu()
         cout << "Please login:\n";
         cout << "Enter email: ";
         cin >> email;
+
+        // Administrator password input
         cout << "Enter password: ";
-        cin >> password;
+        char ch;
+        password = "";
+        while (true)
+        {
+            ch = _getch(); // Use _getch() to read a character without displaying it
+            if (ch == 13) // If Enter key is pressed, stop reading the password
+                break;
+            password += ch;
+            cout << "*"; // Display asterisk for each character
+        }
 
         if (email == "omondiondiek@gmail.com" && password == "omondi@2023")
         {
@@ -60,7 +72,7 @@ void Shopping::menu()
         }
         else
         {
-            cout << "Invalid password or email. Try again.\n";
+            cout << "\nInvalid password or email. Try again.\n";
         }
         break;
 
@@ -97,7 +109,9 @@ void Shopping::administrator()
     cout << "\t\t\t\t\t                                          \n";
     cout << "\t\t\t\t\t      4.View Products\n"; // Added option to view products
     cout << "\t\t\t\t\t                                          \n";
-    cout << "\t\t\t\t\t      5.Back to Main menu\n"; // Changed option number to 5
+    cout << "\t\t\t\t\t      5.Erase Databank\n"; // Added option to erase the databank
+    cout << "\t\t\t\t\t                                          \n";
+    cout << "\t\t\t\t\t      6.Back to Main menu\n"; // Changed option number to 6
     cout << "\t\t\t\t\t                                          \n";
     cout << "Please enter your choice: ";
     cin >> choice;
@@ -109,12 +123,10 @@ void Shopping::administrator()
         break;
 
     case 2:
-        showProducts(); // Display the products before editing
         edit();
         break;
 
     case 3:
-        showProducts(); // Display the products before removing
         rem();
         break;
 
@@ -123,22 +135,36 @@ void Shopping::administrator()
         break;
 
     case 5:
-        menu();
+        eraseDatabank(); // Call the eraseDatabank() function
         break;
 
     default:
         cout << "Invalid choice, try again.\n";
     }
 
-    if (choice != 5)
-        goto m;
+    goto m;
+}
+
+// Function to erase all data from the databank
+void Shopping::eraseDatabank()
+{
+    cout << "Are you sure you want to erase all data from the databank? (y/n): ";
+    char confirm;
+    cin >> confirm;
+
+    if (confirm == 'y' || confirm == 'Y')
+    {
+        ofstream data("databank.txt", ios::out | ios::trunc); // Open file in truncate mode to erase all data
+        data.close();
+        cout << "Databank has been erased successfully.\n";
+    }
 }
 
 void Shopping::buyer()
 {
     m:
     int choice;
-    int decision;
+    string decision;
     cout << "\t\t\t\t_____________________________________________\n";
     cout << "\t\t\t\t               Buyer Menu                    \n";
     cout << "\t\t\t\t_____________________________________________\n";
@@ -157,9 +183,9 @@ void Shopping::buyer()
 
     case 2:
         viewProducts(); // Call the viewProducts() function to display available products
-        cout << "\nDo you wish to proceed with your purchase? If yes, press 1; Press 2  to go back: ";
+        cout << "\nDo you wish to proceed with your purchase? If yes, press 'y'; Press any other key to go back: ";
         cin >> decision;
-        if (decision == 1)
+        if (decision == "y" || decision == "Y")
         {
             reciept();
         }
@@ -254,67 +280,65 @@ void Shopping::add()
 
 void Shopping::edit()
 {
+    fstream data, data1;
     int productkey;
+    int token = 0;
+    int c;
+    float p;
+    float d;
+    string n;
+
     cout << "\n\t\t\tModify Databank";
     cout << "\n\t\t\tProduct code: ";
-    cin >> productkey;
 
-    fstream data("databank.txt", ios::in);
-    fstream tempData("temp_databank.txt", ios::out | ios::app);
-
+    data.open("databank.txt", ios::app | ios::in);
     if (!data)
     {
         cout << "\n\nFile doesn't exist.\n";
     }
     else
     {
-        data >> productcode >> product >> price >> discount;
-        bool productFound = false;
+        data1.open("databank1.txt", ios::app | ios::out);
 
-        do
+        data >> productcode >> product >> price >> discount;
+        while (!data.eof())
         {
             if (productkey == productcode)
             {
                 cout << "\n\t\t\tProduct's new code: ";
-                cin >> productcode;
+                cin >> c;
                 cout << "\n\t\t\tName of Product: ";
-                cin.ignore();
-                getline(cin, product);
+                cin.ignore(); // Add this line to clear the input buffer before reading the name
+                getline(cin, n); // Use getline to read the product name with spaces
                 cout << "\n\t\t\tPrice: ";
-                cin >> price;
+                cin >> p;
                 cout << "Discount on Product: ";
-                cin >> discount;
-                productFound = true;
+                cin >> d;
+                data1 << c << " " << n << " " << p << " " << d << "\n";
+                cout << "\n\t\t\t\t~~Databank Edited~~;";
+                token++;
             }
-
-            tempData << productcode << " " << product << " " << price << " " << discount << "\n";
+            else
+            {
+                data1 << productcode << " " << product << " " << price << " " << discount << "\n";
+            }
             data >> productcode >> product >> price >> discount;
-
-        } while (!data.eof());
-
+        }
         data.close();
-        tempData.close();
+        data1.close();
 
         remove("databank.txt");
-        rename("temp_databank.txt", "databank.txt");
+        rename("databank1.txt", "databank.txt");
 
-        if (productFound)
+        if (token == 0)
         {
-            cout << "\n\t\t\t\t~Databank Edited~\n";
-        }
-        else
-        {
-            cout << "\n\t\t\t~Record not found~\n";
+            cout << "\n\t\t\t~~Record not found~~";
         }
     }
-
-    // Close the file streams and display the updated list of products after editing
-    viewProducts();
 }
 
 void Shopping::rem()
 {
-
     fstream data, data1;
     int productkey;
     int token = 0;
@@ -336,7 +360,7 @@ void Shopping::rem()
         {
             if (productcode == productkey)
             {
-                cout << "\n\t\t\t~Product successfully deleted~";
+                cout << "\n\t\t\t~~Product successfully deleted~~";
                 token++;
             }
             else
@@ -352,14 +376,13 @@ void Shopping::rem()
 
         if (token == 0)
         {
-            cout << "\n\t\t\t~Record not Found~";
+            cout << "\n\t\t\t~~Record not Found~~";
         }
     }
 }
 
 void Shopping::list()
 {
-
     fstream data, data1;
 
     data.open("databank.txt", ios::in);
@@ -381,13 +404,14 @@ void Shopping::reciept()
     fstream data;
     int arrc[100];
     int arrq[100];
-    int choice;
+    string choice;
     int c = 0;
+    int q = 0;
     float amount = 0;
     float discount = 0;
     float total = 0;
 
-    cout << "\n\t\t\t\t~~RECEIPT~~";
+    cout << "\n\t\t\t\t~~~RECIEPT~~~";
     data.open("databank.txt", ios::in);
     if (!data)
     {
@@ -407,7 +431,7 @@ void Shopping::reciept()
             cout << "\n\tEnter Product code: ";
             cin >> arrc[c];
             cout << "\n\tEnter Product Quantity: ";
-            cin >> arrq[c];
+            cin >> arrq[q];
             for (int i = 0; i < c; i++)
             {
                 if (arrc[c] == arrc[i])
@@ -417,16 +441,15 @@ void Shopping::reciept()
                 }
             }
             c++;
-            cout << "Do you wish to continue with the purchase? If yes, press 1; Press 2 key to finish: ";
+            cout << "Do you wish to continue with the purchase? If yes, press 'y'; Press any other key to finish: ";
             cin >> choice;
-        } while (choice == 1);
+        } while (choice == "y");
 
-        cout << "\n\t\t__________________________RECEIPT____________________________________";
-        cout << "\nProd No.\tProduct\t\tProd Quant\tPrice\tAmount\tAmount with Discount";
+        cout << "\n\t\___________________________RECIEPT_____________________________________";
+        cout << "\nProd No.\tProduct\tProd Quant\tPrice\tAmount\tAmount with Dis";
 
         for (int i = 0; i < c; i++)
         {
-
             data.open("databank.txt", ios::in);
             data >> productcode >> product >> price >> discount;
             while (!data.eof())
@@ -454,31 +477,6 @@ void Shopping::reciept()
 }
 
 void Shopping::viewProducts()
-{
-    fstream data;
-    int productcode;
-
-    data.open("databank.txt", ios::in);
-    if (!data)
-    {
-        cout << "No products in the databank." << endl;
-    }
-    else
-    {
-        cout << "\n\t\t\t\t_________ PRODUCTS AVAILABLE _________\n";
-        cout << "\n\tProduct No.\tProduct\t\tPrice\tDiscount\n";
-        cout << "\t________________________________________________\n";
-        data >> productcode >> product >> price >> discount;
-        while (!data.eof())
-        {
-            cout << "\t" << productcode << "\t\t" << product << "\t\t" << price << "\t" << discount << "%\n";
-            data >> productcode >> product >> price >> discount;
-        }
-        data.close();
-    }
-}
-
-void Shopping::showProducts()
 {
     fstream data;
     int productcode;
